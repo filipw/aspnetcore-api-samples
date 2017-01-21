@@ -1,5 +1,8 @@
 ﻿using System;
 using AspNetCore.Sample.Api.Models;
+using IdentityServer4.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
@@ -25,6 +28,48 @@ namespace AspNetCore.Sample.Api
         {
             services.AddSingleton<IContactRepository, InMemoryContactRepository>();
             services.AddRouting();
+
+            // set up embedded identity server
+            services.AddIdentityServer().AddInMemoryClients(new[]
+            {
+                new Client
+                {
+                    ClientId = "client1",
+                    ClientSecrets =
+                    {
+                        new Secret("secret1".Sha256())
+                    },
+                    AllowedGrantTypes = new[]
+                    {
+                        GrantType.ClientCredentials
+                    },
+                    AllowedScopes = new[]
+                    {
+                        "testscope"
+                    }
+                }
+            }).AddInMemoryApiResources(new[]
+            {
+                new ApiResource("embedded")
+                {
+                    Scopes =
+                    {
+                        new Scope("testscope")
+                    },
+                    Enabled = true
+                },
+            }).AddTemporarySigningCredential();
+
+            // set up authorization policy for the API
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("API", policy =>
+                {
+                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser()
+                          .RequireClaim("scope", "testscope");
+                });
+            });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
@@ -34,6 +79,32 @@ namespace AspNetCore.Sample.Api
 
             var contactRepo = app.ApplicationServices.GetRequiredService<IContactRepository>();
 
+            // use embedded identity server to issue tokens
+            app.UseIdentityServer();
+
+            // consume the JWT tokens in the API
+            app.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
+            {
+                Authority = "http://localhost:28134",
+                RequireHttpsMetadata = false,
+            });
+
+            // authorize the whole API against the API policy
+            app.Use(async (c, next) =>
+            {
+                var authz = c.RequestServices.GetRequiredService<IAuthorizationService>();
+                var allowed = await authz.AuthorizeAsync(c.User, null, "API");
+                if (allowed)
+                {
+                    await next();
+                }
+                else
+                {
+                    c.Response.StatusCode = 401;
+                }
+            });
+
+            // define all API endpoints
             app.UseRouter(r =>
             {
                 r.MapGet("contacts", async (request, response, routeData) =>

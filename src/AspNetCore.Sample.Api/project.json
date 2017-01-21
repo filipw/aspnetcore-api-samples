@@ -11,7 +11,10 @@
     "Microsoft.Extensions.Logging": "1.2.0-preview1-23182",
     "Microsoft.Extensions.Logging.Console": "1.2.0-preview1-23182",
     "Microsoft.Extensions.Logging.Debug": "1.2.0-preview1-23182",
-    "Microsoft.Extensions.Options.ConfigurationExtensions": "1.2.0-preview1-23182"
+    "Microsoft.Extensions.Options.ConfigurationExtensions": "1.2.0-preview1-23182",
+    "IdentityServer4": "1.0.2",
+    "IdentityServer4.AccessTokenValidation": "1.0.2",
+    "Microsoft.AspNetCore.Authorization": "1.2.0-preview1-23182"  
   },
 
   "tools": {
