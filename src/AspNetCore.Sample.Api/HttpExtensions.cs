@@ -9,6 +9,8 @@ namespace AspNetCore.Sample.Api
 {
     public static class HttpExtensions
     {
+        private static readonly JsonSerializer Serializer = new JsonSerializer();
+
         public static Task WriteJson<T>(this HttpResponse response, T obj)
         {
             response.ContentType = "application/json";
@@ -17,12 +19,10 @@ namespace AspNetCore.Sample.Api
 
         public static async Task<T> ReadFromJson<T>(this HttpContext httpContext)
         {
-            var serializer = new JsonSerializer();
-
-            using (var sr = new StreamReader(httpContext.Request.Body))
-            using (var jsonTextReader = new JsonTextReader(sr))
+            using (var streamReader = new StreamReader(httpContext.Request.Body))
+            using (var jsonTextReader = new JsonTextReader(streamReader))
             {
-                var obj = serializer.Deserialize<T>(jsonTextReader);
+                var obj = Serializer.Deserialize<T>(jsonTextReader);
 
                 var results = new List<ValidationResult>();
                 if (Validator.TryValidateObject(obj, new ValidationContext(obj), results))

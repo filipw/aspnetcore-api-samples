@@ -24,6 +24,7 @@ namespace AspNetCore.Sample.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IContactRepository, InMemoryContactRepository>();
+            services.AddRouting();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
