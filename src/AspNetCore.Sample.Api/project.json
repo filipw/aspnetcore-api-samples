@@ -4,12 +4,9 @@
       "version": "1.0.1",
       "type": "platform"
     },
-    "Microsoft.AspNetCore.Mvc": "1.2.0-preview1-23182",
     "Microsoft.AspNetCore.Routing": "1.2.0-preview1-23182",
     "Microsoft.AspNetCore.Server.IISIntegration": "1.2.0-preview1-23182",
     "Microsoft.AspNetCore.Server.Kestrel": "1.2.0-preview1-23182",
-    "Microsoft.Extensions.Configuration.EnvironmentVariables": "1.2.0-preview1-23182",
-    "Microsoft.Extensions.Configuration.FileExtensions": "1.2.0-preview1-23182",
     "Microsoft.Extensions.Configuration.Json": "1.2.0-preview1-23182",
     "Microsoft.Extensions.Logging": "1.2.0-preview1-23182",
     "Microsoft.Extensions.Logging.Console": "1.2.0-preview1-23182",

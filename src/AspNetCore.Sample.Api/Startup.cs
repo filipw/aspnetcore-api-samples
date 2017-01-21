@@ -15,9 +15,7 @@ namespace AspNetCore.Sample.Api
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             Configuration = builder.Build();
         }
 
@@ -25,7 +23,6 @@ namespace AspNetCore.Sample.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
             services.AddSingleton<IContactRepository, InMemoryContactRepository>();
         }
 
@@ -49,7 +46,6 @@ namespace AspNetCore.Sample.Api
                     var contact = await contactRepo.Get(Convert.ToInt32(routeData.Values["id"]));
                     if (contact == null)
                     {
-                        
                         response.StatusCode = 404;
                         return;
                     }
@@ -85,8 +81,6 @@ namespace AspNetCore.Sample.Api
                     response.StatusCode = 204;
                 });
             });
-
-            app.UseMvc();
         }
     }
 }
