@@ -28,7 +28,7 @@ namespace AspNetCore.Sample.Api.Models
 
         public Task<int> Add(Contact contact)
         {
-            var newId = _contacts.LastOrDefault()?.ContactId ?? 1;
+            var newId = (_contacts.LastOrDefault()?.ContactId ?? 0) + 1;
             contact.ContactId = newId;
             _contacts.Add(contact);
             return Task.FromResult(newId);

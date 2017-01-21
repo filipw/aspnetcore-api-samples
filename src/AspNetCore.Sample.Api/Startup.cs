@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AspNetCore.Sample.Api.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -38,7 +35,7 @@ namespace AspNetCore.Sample.Api
             loggerFactory.AddDebug();
 
             var contactRepo = app.ApplicationServices.GetRequiredService<IContactRepository>();
-            
+
             app.UseRouter(r =>
             {
                 r.MapGet("contacts", async (request, response, routeData) =>
@@ -49,9 +46,10 @@ namespace AspNetCore.Sample.Api
 
                 r.MapGet("contacts/{id:int}", async (request, response, routeData) =>
                 {
-                    var contact = contactRepo.Get(Convert.ToInt32(routeData.Values["id"]));
+                    var contact = await contactRepo.Get(Convert.ToInt32(routeData.Values["id"]));
                     if (contact == null)
                     {
+                        
                         response.StatusCode = 404;
                         return;
                     }
@@ -61,7 +59,9 @@ namespace AspNetCore.Sample.Api
 
                 r.MapPost("contacts", async (request, response, routeData) =>
                 {
-                    var newContact = request.ReadFromJson<Contact>();
+                    var newContact = await request.HttpContext.ReadFromJson<Contact>();
+                    if (newContact == null) return;
+
                     await contactRepo.Add(newContact);
 
                     response.StatusCode = 201;
@@ -70,7 +70,9 @@ namespace AspNetCore.Sample.Api
 
                 r.MapPut("contacts/{id:int}", async (request, response, routeData) =>
                 {
-                    var updatedContact = request.ReadFromJson<Contact>();
+                    var updatedContact = await request.HttpContext.ReadFromJson<Contact>();
+                    if (updatedContact == null) return;
+
                     updatedContact.ContactId = Convert.ToInt32(routeData.Values["id"]);
                     await contactRepo.Update(updatedContact);
 
