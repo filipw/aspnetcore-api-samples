@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MvcCoreApiWithAuthentication.Models;
 
@@ -33,6 +34,7 @@ namespace MvcCoreApiWithAuthentication.Controllers
         }
 
         [HttpPost("")]
+        [Authorize("WritePolicy")]
         public async Task<IActionResult> Post([FromBody]Contact contact)
         {
             if (ModelState.IsValid)
@@ -45,6 +47,7 @@ namespace MvcCoreApiWithAuthentication.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize("WritePolicy")]
         public async Task<IActionResult> Put(int id, [FromBody]Contact contact)
         {
             contact.ContactId = id;
@@ -53,6 +56,7 @@ namespace MvcCoreApiWithAuthentication.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize("WritePolicy")]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _repository.Get(id);
