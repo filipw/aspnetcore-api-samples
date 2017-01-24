@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,7 +32,10 @@ namespace MvcCoreApi
                 o.DefaultApiVersion = ApiVersion.Parse("1");
                 o.AssumeDefaultVersionWhenUnspecified = true;
                 o.ReportApiVersions = true;
-                o.ApiVersionReader = new HeaderApiVersionReader("version");
+                // o.ApiVersionReader = new HeaderApiVersionReader("version");
+
+                // request "application/vnd.demo-v2+json"
+                o.ApiVersionReader = new MediaTypeApiVersionReader();
             });
         }
 
