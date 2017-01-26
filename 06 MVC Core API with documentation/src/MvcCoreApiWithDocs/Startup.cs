@@ -67,7 +67,7 @@ namespace MvcCoreApiWithDocs
                     Type = "oauth2",
                     Flow = "Client Credentials",
                     Scopes = new Dictionary<string, string> { { "read", "Read access"}, {"write", "Write access"} },
-                    TokenUrl = "http://localhost:28134"
+                    TokenUrl = "http://localhost:28238"
                 });
 
                 options.OperationFilter<ScopesDefinitionOperationFilter>(new Dictionary<string, string> { { "ReadPolicy", "read" }, { "WritePolicy", "write" } });
@@ -87,7 +87,7 @@ namespace MvcCoreApiWithDocs
             // consume the JWT tokens in the API
             app.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
             {
-                Authority = "http://localhost:28134",
+                Authority = "http://localhost:28238/",
                 RequireHttpsMetadata = false,
             });
 
