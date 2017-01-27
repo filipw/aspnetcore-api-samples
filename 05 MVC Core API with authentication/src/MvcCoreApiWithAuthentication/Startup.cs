@@ -54,17 +54,21 @@ namespace MvcCoreApiWithAuthentication
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
 
-            // use embedded identity server to issue tokens
-            app.UseIdentityServer();
-
-            // consume the JWT tokens in the API
-            app.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
-            {
-                Authority = "http://localhost:28134",
-                RequireHttpsMetadata = false,
+            app.Map("/openid", id => {
+                // use embedded identity server to issue tokens
+                id.UseIdentityServer();
             });
 
-            app.UseMvc();
+            app.Map("/api", api => {
+                // consume the JWT tokens in the API
+                api.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
+                {
+                    Authority = "http://localhost:5000/openid",
+                    RequireHttpsMetadata = false,
+                });
+
+                api.UseMvc();
+            });
         }
     }
 }

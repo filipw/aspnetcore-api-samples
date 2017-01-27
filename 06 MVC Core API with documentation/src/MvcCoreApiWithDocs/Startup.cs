@@ -67,7 +67,7 @@ namespace MvcCoreApiWithDocs
                     Type = "oauth2",
                     Flow = "Client Credentials",
                     Scopes = new Dictionary<string, string> { { "read", "Read access"}, {"write", "Write access"} },
-                    TokenUrl = "http://localhost:28238"
+                    TokenUrl = "http://localhost:5000/openid/token/connect"
                 });
 
                 options.OperationFilter<ScopesDefinitionOperationFilter>(new Dictionary<string, string> { { "ReadPolicy", "read" }, { "WritePolicy", "write" } });
@@ -81,14 +81,20 @@ namespace MvcCoreApiWithDocs
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
 
-            // use embedded identity server to issue tokens
-            app.UseIdentityServer();
+            app.Map("/openid", id => {
+                // use embedded identity server to issue tokens
+                id.UseIdentityServer();
+            });
 
-            // consume the JWT tokens in the API
-            app.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
-            {
-                Authority = "http://localhost:28238/",
-                RequireHttpsMetadata = false,
+            app.Map("/api", api => {
+                // consume the JWT tokens in the API
+                api.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
+                {
+                    Authority = "http://localhost:5000/openid",
+                    RequireHttpsMetadata = false,
+                });
+
+                app.UseMvc();
             });
 
             app.UseSwagger();
@@ -96,8 +102,6 @@ namespace MvcCoreApiWithDocs
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "V1 Docs");
             });
-
-            app.UseMvc();
         }
     }
 }
