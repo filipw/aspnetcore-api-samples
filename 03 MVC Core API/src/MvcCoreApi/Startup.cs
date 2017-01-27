@@ -23,7 +23,6 @@ namespace MvcCoreApi
         {
             services.AddSingleton<IContactRepository, InMemoryContactRepository>();
             services.AddMvcCore().
-                AddAuthorization().
                 AddDataAnnotations().
                 AddJsonFormatters();
         }
