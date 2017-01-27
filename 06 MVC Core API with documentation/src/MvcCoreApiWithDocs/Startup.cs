@@ -94,13 +94,13 @@ namespace MvcCoreApiWithDocs
                     RequireHttpsMetadata = false,
                 });
 
-                app.UseMvc();
+                api.UseSwagger();
+                api.UseMvc();
             });
 
-            app.UseSwagger();
             app.UseSwaggerUi(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "V1 Docs");
+                c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "V1 Docs");
             });
         }
     }
