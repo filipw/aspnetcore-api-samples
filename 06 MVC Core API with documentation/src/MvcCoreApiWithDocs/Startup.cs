@@ -64,7 +64,7 @@ namespace MvcCoreApiWithDocs
 
                 options.AddSecurityDefinition("oauth2", new OAuth2Scheme
                 {
-                    Type = "oauth2",
+                    Type = "openid",
                     Flow = "Client Credentials",
                     Scopes = new Dictionary<string, string> { { "read", "Read access"}, {"write", "Write access"} },
                     TokenUrl = "http://localhost:5000/openid/token/connect"

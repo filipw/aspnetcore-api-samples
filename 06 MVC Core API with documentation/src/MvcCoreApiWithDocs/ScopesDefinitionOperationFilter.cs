@@ -57,7 +57,7 @@ namespace MvcCoreApiWithDocs
                 {
                     new Dictionary<string, IEnumerable<string>>
                     {
-                        {"oauth2", requiredScopes}
+                        {"openid", requiredScopes}
                     }
                 };
             }
