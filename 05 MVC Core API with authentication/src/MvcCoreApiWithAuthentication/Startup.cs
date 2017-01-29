@@ -33,14 +33,7 @@ namespace MvcCoreApiWithAuthentication
                 RequireClaim("scope", "write").Build();
 
             services.AddSingleton<IContactRepository, InMemoryContactRepository>();
-            services.AddMvcCore(opt =>
-                {
-                    opt.Filters.Add(new AuthorizeFilter("ReadPolicy"));
-                }).AddAuthorization(o =>
-                {
-                    o.AddPolicy("ReadPolicy", readPolicy);
-                    o.AddPolicy("WritePolicy", writePolicy);
-                }).AddDataAnnotations().
+            services.AddMvcCore().AddDataAnnotations().
                 AddJsonFormatters();
 
             // set up embedded identity server

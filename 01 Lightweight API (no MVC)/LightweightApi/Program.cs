@@ -43,46 +43,6 @@ namespace LightweightApi
                             var contacts = await contactRepo.GetAll();
                             await response.WriteJson(contacts);
                         });
-
-                        r.MapGet("contacts/{id:int}", async (request, response, routeData) =>
-                        {
-                            var contact = await contactRepo.Get(Convert.ToInt32(routeData.Values["id"]));
-                            if (contact == null)
-                            {
-                                response.StatusCode = 404;
-                                return;
-                            }
-
-                            await response.WriteJson(contact);
-                        });
-
-                        r.MapPost("contacts", async (request, response, routeData) =>
-                        {
-                            var newContact = await request.HttpContext.ReadFromJson<Contact>();
-                            if (newContact == null) return;
-
-                            await contactRepo.Add(newContact);
-
-                            response.StatusCode = 201;
-                            await response.WriteJson(newContact);
-                        });
-
-                        r.MapPut("contacts/{id:int}", async (request, response, routeData) =>
-                        {
-                            var updatedContact = await request.HttpContext.ReadFromJson<Contact>();
-                            if (updatedContact == null) return;
-
-                            updatedContact.ContactId = Convert.ToInt32(routeData.Values["id"]);
-                            await contactRepo.Update(updatedContact);
-
-                            response.StatusCode = 204;
-                        });
-
-                        r.MapDelete("contacts/{id:int}", async (request, response, routeData) =>
-                        {
-                            await contactRepo.Delete(Convert.ToInt32(routeData.Values["id"]));
-                            response.StatusCode = 204;
-                        });
                     });
                 })
                 .Build();

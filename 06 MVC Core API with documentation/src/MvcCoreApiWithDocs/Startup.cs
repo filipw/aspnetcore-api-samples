@@ -45,7 +45,7 @@ namespace MvcCoreApiWithDocs
                     o.AddPolicy("ReadPolicy", readPolicy);
                     o.AddPolicy("WritePolicy", writePolicy);
                 }).AddDataAnnotations().
-                AddJsonFormatters().AddApiExplorer();
+                AddJsonFormatters();
 
             // set up embedded identity server
             services.AddIdentityServer().

@@ -34,7 +34,6 @@ namespace MvcCoreApiWithAuthentication.Controllers
         }
 
         [HttpPost("")]
-        [Authorize("WritePolicy")]
         public async Task<IActionResult> Post([FromBody]Contact contact)
         {
             if (ModelState.IsValid)
