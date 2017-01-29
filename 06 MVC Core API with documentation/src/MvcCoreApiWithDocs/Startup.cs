@@ -45,8 +45,7 @@ namespace MvcCoreApiWithDocs
                     o.AddPolicy("ReadPolicy", readPolicy);
                     o.AddPolicy("WritePolicy", writePolicy);
                 }).AddDataAnnotations().
-                AddJsonFormatters().
-                AddApiExplorer();
+                AddJsonFormatters().AddApiExplorer();
 
             // set up embedded identity server
             services.AddIdentityServer().
@@ -62,7 +61,7 @@ namespace MvcCoreApiWithDocs
                     Description = "Used to exchange contact information"
                 });
 
-                options.AddSecurityDefinition("oauth2", new OAuth2Scheme
+                options.AddSecurityDefinition("openid", new OAuth2Scheme
                 {
                     Type = "openid",
                     Flow = "Client Credentials",
