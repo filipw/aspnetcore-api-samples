@@ -22,7 +22,7 @@ namespace MvcCoreApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IContactRepository, InMemoryContactRepository>();
-            services.AddMvc();
+            services.AddMvcCore();
         }
 
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
