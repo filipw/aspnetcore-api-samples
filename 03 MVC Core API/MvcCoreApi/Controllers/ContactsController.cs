@@ -11,6 +11,9 @@ namespace MvcCoreApi.Controllers
 
         public ContactsController(IContactRepository repository)
         {
+            if (repository == null)
+                throw new System.ArgumentNullException(nameof(repository));
+
             _repository = repository;
         }
 
