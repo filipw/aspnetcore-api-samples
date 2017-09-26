@@ -6,8 +6,6 @@
     <AssemblyName>MvcCoreApiWithAuthentication</AssemblyName>
     <OutputType>Exe</OutputType>
     <PackageId>MvcCoreApiWithAuthentication</PackageId>
-    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
-    <PackageTargetFallback>$(PackageTargetFallback);dotnet5.6;portable-net45+win8</PackageTargetFallback>
   </PropertyGroup>
 
   <ItemGroup>
