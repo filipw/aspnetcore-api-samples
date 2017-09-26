@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
+using Microsoft.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc.Versioning;
 
 namespace MvcCoreApi
@@ -11,14 +12,14 @@ namespace MvcCoreApi
 
         public string Read(HttpRequest request)
         {
-            var headers = new RequestHeaders(request.Headers);
+            var headers = request.GetTypedHeaders();
 
-            var acceptHeaderVersion = headers.Accept.FirstOrDefault(x => _mediaTypes.Any(a => x.MediaType.ToLowerInvariant().Contains(a)));
+            var acceptHeaderVersion = headers.Accept.FirstOrDefault(x => _mediaTypes.Any(a => x.MediaType.ToString().ToLowerInvariant().Contains(a)));
 
-            if (acceptHeaderVersion != null && acceptHeaderVersion.MediaType.Contains("-v") &&
-                acceptHeaderVersion.MediaType.Contains("+"))
+            if (acceptHeaderVersion != null && acceptHeaderVersion.MediaType.ToString().Contains("-v") &&
+                acceptHeaderVersion.MediaType.ToString().Contains("+"))
             {
-                return acceptHeaderVersion.MediaType.Between("-v", "+");
+                return acceptHeaderVersion.MediaType.ToString().Between("-v", "+");
             }
 
             return null;

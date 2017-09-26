@@ -16,17 +16,19 @@ namespace LightweightApiWithAuth
     {
         public static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables().Build();
-
             var host = new WebHostBuilder()
                 .UseKestrel()
-                .UseConfiguration(config)
                 .UseContentRoot(Directory.GetCurrentDirectory())
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddEnvironmentVariables();
+                })
+                .ConfigureLogging((hostingContext, l) =>
+                {
+                    l.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    l.AddConsole();
+                })
                 .UseIISIntegration()
-                .ConfigureLogging(l => l.AddConsole(config.GetSection("Logging")))
                 .ConfigureServices(s =>
                 {
                     // set up embedded identity server
@@ -64,7 +66,7 @@ namespace LightweightApiWithAuth
                     {
                         var authz = c.RequestServices.GetRequiredService<IAuthorizationService>();
                         var allowed = await authz.AuthorizeAsync(c.User, null, "API");
-                        if (allowed)
+                        if (allowed.Succeeded)
                         {
                             await next();
                         }

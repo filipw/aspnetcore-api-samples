@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.PlatformAbstractions;
 using MvcCoreApiWithDocs.Models;
 using Swashbuckle.AspNetCore.Swagger;
+using System;
 
 namespace MvcCoreApiWithDocs
 {
@@ -72,7 +72,7 @@ namespace MvcCoreApiWithDocs
 
                 options.OperationFilter<ScopesDefinitionOperationFilter>(new Dictionary<string, string> { { "ReadPolicy", "read" }, { "WritePolicy", "write" } });
 
-                var xmlDocs = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "MvcCoreApiWithDocs.xml");
+                var xmlDocs = Path.Combine(AppContext.BaseDirectory, "MvcCoreApiWithDocs.xml");
                 options.IncludeXmlComments(xmlDocs);
             });
         }
