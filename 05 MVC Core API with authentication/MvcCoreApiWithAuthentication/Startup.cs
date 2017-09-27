@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using IdentityServer4.AccessTokenValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -40,7 +41,14 @@ namespace MvcCoreApiWithAuthentication
             services.AddIdentityServer().
                 AddTestClients().
                 AddTestResources().
-                AddTemporarySigningCredential();
+                AddDeveloperSigningCredential();
+
+            services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
+                {
+                    o.Authority = "http://localhost:5000/openid";
+                    o.RequireHttpsMetadata = false;
+                });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
@@ -54,12 +62,7 @@ namespace MvcCoreApiWithAuthentication
 
             app.Map("/api", api => {
                 // consume the JWT tokens in the API
-                api.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
-                {
-                    Authority = "http://localhost:5000/openid",
-                    RequireHttpsMetadata = false,
-                });
-
+                api.UseAuthentication();
                 api.UseMvc();
             });
         }

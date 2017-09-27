@@ -10,6 +10,10 @@ namespace MvcCoreApi
     {
         private readonly string[] _mediaTypes = { "application/vnd.demo" };
 
+        public void AddParmeters(IApiVersionParameterDescriptionContext context)
+        {
+        }
+
         public string Read(HttpRequest request)
         {
             var headers = request.GetTypedHeaders();

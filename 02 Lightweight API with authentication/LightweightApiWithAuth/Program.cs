@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using IdentityServer4.AccessTokenValidation;
 
 namespace LightweightApiWithAuth
 {
@@ -35,9 +36,16 @@ namespace LightweightApiWithAuth
                     s.AddIdentityServer().
                         AddTestClients().
                         AddTestResources().
-                        AddTemporarySigningCredential();
+                        AddDeveloperSigningCredential();
 
                     s.AddRouting();
+
+                    s.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                        .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
+                        {
+                            o.Authority = "http://localhost:34917/openid";
+                            o.RequireHttpsMetadata = false;
+                        });
 
                     // set up authorization policy for the API
                     s.AddAuthorization(options =>
@@ -55,11 +63,7 @@ namespace LightweightApiWithAuth
                     app.UseIdentityServer();
 
                     // consume the JWT tokens in the API
-                    app.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
-                    {
-                        Authority = "http://localhost:34917",
-                        RequireHttpsMetadata = false,
-                    });
+                    app.UseAuthentication();
 
                     // authorize the whole API against the API policy
                     app.Use(async (c, next) =>
