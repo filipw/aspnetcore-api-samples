@@ -88,7 +88,7 @@ namespace LightweightApiWithAuth
                         r.MapGet("contacts", async (request, response, routeData) =>
                         {
                             var contacts = await contactRepo.GetAll();
-                            await response.WriteJson(contacts);
+                            response.WriteJson(contacts);
                         });
 
                         r.MapGet("contacts/{id:int}", async (request, response, routeData) =>
@@ -100,7 +100,7 @@ namespace LightweightApiWithAuth
                                 return;
                             }
 
-                            await response.WriteJson(contact);
+                            response.WriteJson(contact);
                         });
                     });
                 })

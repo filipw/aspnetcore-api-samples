@@ -4,6 +4,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace LightweightApiWithAuth
 {
@@ -11,13 +13,22 @@ namespace LightweightApiWithAuth
     {
         private static readonly JsonSerializer Serializer = new JsonSerializer();
 
-        public static Task WriteJson<T>(this HttpResponse response, T obj)
+        public static void WriteJson<T>(this HttpResponse response, T obj)
         {
             response.ContentType = "application/json";
-            return response.WriteAsync(JsonConvert.SerializeObject(obj));
+            using (var writer = new HttpResponseStreamWriter(response.Body, Encoding.UTF8))
+            {
+                using (var jsonWriter = new JsonTextWriter(writer))
+                {
+                    jsonWriter.CloseOutput = false;
+                    jsonWriter.AutoCompleteOnClose = false;
+
+                    Serializer.Serialize(jsonWriter, obj);
+                }
+            }
         }
 
-        public static async Task<T> ReadFromJson<T>(this HttpContext httpContext)
+        public static T ReadFromJson<T>(this HttpContext httpContext)
         {
             using (var streamReader = new StreamReader(httpContext.Request.Body))
             using (var jsonTextReader = new JsonTextReader(streamReader))
@@ -31,7 +42,7 @@ namespace LightweightApiWithAuth
                 }
 
                 httpContext.Response.StatusCode = 400;
-                await httpContext.Response.WriteJson(results);
+                httpContext.Response.WriteJson(results);
 
                 return default(T);
             }
