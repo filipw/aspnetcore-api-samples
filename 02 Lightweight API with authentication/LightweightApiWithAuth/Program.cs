@@ -43,7 +43,7 @@ namespace LightweightApiWithAuth
                     s.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
                         .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
                         {
-                            o.Authority = "http://localhost:34917/openid";
+                            o.Authority = "http://localhost:5000/openid";
                             o.RequireHttpsMetadata = false;
                         });
 
@@ -59,8 +59,10 @@ namespace LightweightApiWithAuth
                 })
                 .Configure(app =>
                 {
-                    // use embedded identity server to issue tokens
-                    app.UseIdentityServer();
+                    app.Map("/openid", id => {
+                        // use embedded identity server to issue tokens
+                        id.UseIdentityServer();
+                    });
 
                     // consume the JWT tokens in the API
                     app.UseAuthentication();
