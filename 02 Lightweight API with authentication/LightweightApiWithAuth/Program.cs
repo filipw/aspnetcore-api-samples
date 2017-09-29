@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using IdentityServer4.AccessTokenValidation;
 
 namespace LightweightApiWithAuth
 {
@@ -16,26 +17,35 @@ namespace LightweightApiWithAuth
     {
         public static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables().Build();
-
             var host = new WebHostBuilder()
                 .UseKestrel()
-                .UseConfiguration(config)
                 .UseContentRoot(Directory.GetCurrentDirectory())
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddEnvironmentVariables();
+                })
+                .ConfigureLogging((hostingContext, l) =>
+                {
+                    l.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    l.AddConsole();
+                })
                 .UseIISIntegration()
-                .ConfigureLogging(l => l.AddConsole(config.GetSection("Logging")))
                 .ConfigureServices(s =>
                 {
                     // set up embedded identity server
                     s.AddIdentityServer().
                         AddTestClients().
                         AddTestResources().
-                        AddTemporarySigningCredential();
+                        AddDeveloperSigningCredential();
 
                     s.AddRouting();
+
+                    s.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                        .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
+                        {
+                            o.Authority = "http://localhost:5000/openid";
+                            o.RequireHttpsMetadata = false;
+                        });
 
                     // set up authorization policy for the API
                     s.AddAuthorization(options =>
@@ -49,22 +59,20 @@ namespace LightweightApiWithAuth
                 })
                 .Configure(app =>
                 {
-                    // use embedded identity server to issue tokens
-                    app.UseIdentityServer();
+                    app.Map("/openid", id => {
+                        // use embedded identity server to issue tokens
+                        id.UseIdentityServer();
+                    });
 
                     // consume the JWT tokens in the API
-                    app.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
-                    {
-                        Authority = "http://localhost:34917",
-                        RequireHttpsMetadata = false,
-                    });
+                    app.UseAuthentication();
 
                     // authorize the whole API against the API policy
                     app.Use(async (c, next) =>
                     {
                         var authz = c.RequestServices.GetRequiredService<IAuthorizationService>();
                         var allowed = await authz.AuthorizeAsync(c.User, null, "API");
-                        if (allowed)
+                        if (allowed.Succeeded)
                         {
                             await next();
                         }
@@ -82,7 +90,7 @@ namespace LightweightApiWithAuth
                         r.MapGet("contacts", async (request, response, routeData) =>
                         {
                             var contacts = await contactRepo.GetAll();
-                            await response.WriteJson(contacts);
+                            response.WriteJson(contacts);
                         });
 
                         r.MapGet("contacts/{id:int}", async (request, response, routeData) =>
@@ -94,7 +102,7 @@ namespace LightweightApiWithAuth
                                 return;
                             }
 
-                            await response.WriteJson(contact);
+                            response.WriteJson(contact);
                         });
                     });
                 })

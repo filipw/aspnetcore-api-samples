@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace LightweightApi
 {
@@ -19,17 +21,19 @@ namespace LightweightApi
     {
         public static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables().Build();
-
             var host = new WebHostBuilder()
                 .UseKestrel()
-                .UseConfiguration(config)
                 .UseContentRoot(Directory.GetCurrentDirectory())
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddEnvironmentVariables();
+                })
+                .ConfigureLogging((hostingContext, l) => 
+                {
+                    l.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    l.AddConsole();
+                })
                 .UseIISIntegration()
-                .ConfigureLogging(l => l.AddConsole(config.GetSection("Logging")))
                 .ConfigureServices(s => s.AddRouting())
                 .Configure(app =>
                 {
@@ -41,7 +45,7 @@ namespace LightweightApi
                         r.MapGet("contacts", async (request, response, routeData) =>
                         {
                             var contacts = await contactRepo.GetAll();
-                            await response.WriteJson(contacts);
+                            response.WriteJson(contacts);
                         });
                     });
                 })
@@ -55,13 +59,22 @@ namespace LightweightApi
     {
         private static readonly JsonSerializer Serializer = new JsonSerializer();
 
-        public static Task WriteJson<T>(this HttpResponse response, T obj)
+        public static void WriteJson<T>(this HttpResponse response, T obj)
         {
             response.ContentType = "application/json";
-            return response.WriteAsync(JsonConvert.SerializeObject(obj));
+            using (var writer = new HttpResponseStreamWriter(response.Body, Encoding.UTF8))
+            {
+                using (var jsonWriter = new JsonTextWriter(writer))
+                {
+                    jsonWriter.CloseOutput = false;
+                    jsonWriter.AutoCompleteOnClose = false;
+
+                    Serializer.Serialize(jsonWriter, obj);
+                }
+            }
         }
 
-        public static async Task<T> ReadFromJson<T>(this HttpContext httpContext)
+        public static T ReadFromJson<T>(this HttpContext httpContext)
         {
             using (var streamReader = new StreamReader(httpContext.Request.Body))
             using (var jsonTextReader = new JsonTextReader(streamReader))
@@ -75,7 +88,7 @@ namespace LightweightApi
                 }
 
                 httpContext.Response.StatusCode = 400;
-                await httpContext.Response.WriteJson(results);
+                httpContext.Response.WriteJson(results);
 
                 return default(T);
             }

@@ -8,24 +8,15 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.PlatformAbstractions;
 using MvcCoreApiWithDocs.Models;
 using Swashbuckle.AspNetCore.Swagger;
+using System;
+using IdentityServer4.AccessTokenValidation;
 
 namespace MvcCoreApiWithDocs
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            Configuration = builder.Build();
-        }
-
-        public IConfigurationRoot Configuration { get; }
-
         public void ConfigureServices(IServiceCollection services)
         {
             var readPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).
@@ -52,7 +43,15 @@ namespace MvcCoreApiWithDocs
             services.AddIdentityServer().
                 AddTestClients().
                 AddTestResources().
-                AddTemporarySigningCredential();
+                AddDeveloperSigningCredential();
+
+            services
+                .AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
+                {
+                    o.Authority = "http://localhost:5000/openid";
+                    o.RequireHttpsMetadata = false;
+                });
 
             services.AddSwaggerGen(options => {
                 options.SwaggerDoc("v1", new Info
@@ -72,15 +71,13 @@ namespace MvcCoreApiWithDocs
 
                 options.OperationFilter<ScopesDefinitionOperationFilter>(new Dictionary<string, string> { { "ReadPolicy", "read" }, { "WritePolicy", "write" } });
 
-                var xmlDocs = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "MvcCoreApiWithDocs.xml");
+                var xmlDocs = Path.Combine(AppContext.BaseDirectory, "MvcCoreApiWithDocs.xml");
                 options.IncludeXmlComments(xmlDocs);
             });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-
             app.Map("/openid", id => {
                 // use embedded identity server to issue tokens
                 id.UseIdentityServer();
@@ -88,17 +85,12 @@ namespace MvcCoreApiWithDocs
 
             app.Map("/api", api => {
                 // consume the JWT tokens in the API
-                api.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
-                {
-                    Authority = "http://localhost:5000/openid",
-                    RequireHttpsMetadata = false,
-                });
-
+                api.UseAuthentication();
                 api.UseSwagger();
                 api.UseMvc();
             });
 
-            app.UseSwaggerUi(c =>
+            app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "V1 Docs");
             });

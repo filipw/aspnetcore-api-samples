@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using IdentityServer4.AccessTokenValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,16 +13,6 @@ namespace MvcCoreApiWithAuthentication
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            Configuration = builder.Build();
-        }
-
-        public IConfigurationRoot Configuration { get; }
-
         public void ConfigureServices(IServiceCollection services)
         {
             var readPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).
@@ -40,13 +31,18 @@ namespace MvcCoreApiWithAuthentication
             services.AddIdentityServer().
                 AddTestClients().
                 AddTestResources().
-                AddTemporarySigningCredential();
+                AddDeveloperSigningCredential();
+
+            services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
+                {
+                    o.Authority = "http://localhost:5000/openid";
+                    o.RequireHttpsMetadata = false;
+                });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-
             app.Map("/openid", id => {
                 // use embedded identity server to issue tokens
                 id.UseIdentityServer();
@@ -54,12 +50,7 @@ namespace MvcCoreApiWithAuthentication
 
             app.Map("/api", api => {
                 // consume the JWT tokens in the API
-                api.UseIdentityServerAuthentication(new IdentityServerAuthenticationOptions
-                {
-                    Authority = "http://localhost:5000/openid",
-                    RequireHttpsMetadata = false,
-                });
-
+                api.UseAuthentication();
                 api.UseMvc();
             });
         }
