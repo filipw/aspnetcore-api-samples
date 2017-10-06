@@ -15,9 +15,8 @@ namespace LightweightApiWithAuth
 {
     public class Program
     {
-        public static void Main(string[] args)
-        {
-            var host = new WebHostBuilder()
+        public static void Main(string[] args) =>
+            new WebHostBuilder()
                 .UseKestrel()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .ConfigureAppConfiguration((hostingContext, config) =>
@@ -38,52 +37,39 @@ namespace LightweightApiWithAuth
                         AddTestResources().
                         AddDeveloperSigningCredential();
 
-                    s.AddRouting();
-
-                    s.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
-                        .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
-                        {
-                            o.Authority = "http://localhost:5000/openid";
-                            o.RequireHttpsMetadata = false;
-                        });
-
-                    // set up authorization policy for the API
-                    s.AddAuthorization(options =>
+                    s.AddRouting()
+                    .AddAuthorization(options =>
                     {
+                        // set up authorization policy for the API
                         options.AddPolicy("API", policy =>
                         {
                             policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                             policy.RequireAuthenticatedUser().RequireClaim("scope", "read");
                         });
+                    })
+                    .AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                    .AddIdentityServerAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme, o =>
+                    {
+                        o.Authority = "http://localhost:5000/openid";
+                        o.RequireHttpsMetadata = false;
                     });
                 })
                 .Configure(app =>
                 {
-                    app.Map("/openid", id => {
+                    app.Map("/openid", id =>
+                    {
                         // use embedded identity server to issue tokens
                         id.UseIdentityServer();
-                    });
-
-                    // consume the JWT tokens in the API
-                    app.UseAuthentication();
-
-                    // authorize the whole API against the API policy
-                    app.Use(async (c, next) =>
-                    {
-                        var authz = c.RequestServices.GetRequiredService<IAuthorizationService>();
-                        var allowed = await authz.AuthorizeAsync(c.User, null, "API");
-                        if (allowed.Succeeded)
-                        {
-                            await next();
-                        }
-                        else
-                        {
-                            c.Response.StatusCode = 401;
-                        }
-                    });
-
-                    // define all API endpoints
-                    app.UseRouter(r =>
+                    })
+                    .UseAuthentication() // consume the JWT tokens in the API
+                    .Use(async (c, next) => // authorize the whole API against the API policy
+                     {
+                         var allowed = await c.RequestServices.GetRequiredService<IAuthorizationService>().AuthorizeAsync(c.User, null, "API");
+                         if (allowed.Succeeded) await next();
+                         else
+                             c.Response.StatusCode = 401;
+                     })
+                    .UseRouter(r => // define all API endpoints
                     {
                         var contactRepo = new InMemoryContactRepository();
 
@@ -106,9 +92,6 @@ namespace LightweightApiWithAuth
                         });
                     });
                 })
-                .Build();
-
-            host.Run();
-        }
+                .Build().Run();
     }
 }
