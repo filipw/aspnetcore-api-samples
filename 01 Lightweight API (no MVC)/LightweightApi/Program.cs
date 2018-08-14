@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
+using System.Buffers;
 
 namespace LightweightApi
 {
@@ -57,29 +58,36 @@ namespace LightweightApi
 
     public static class HttpExtensions
     {
-        private static readonly JsonSerializer Serializer = new JsonSerializer();
+        private static readonly JsonArrayPool<char> JsonArrayPool = new JsonArrayPool<char>(ArrayPool<char>.Shared);
 
         public static void WriteJson<T>(this HttpResponse response, T obj)
         {
             response.ContentType = "application/json";
+
+            var serializer = JsonSerializer.CreateDefault();
             using (var writer = new HttpResponseStreamWriter(response.Body, Encoding.UTF8))
             {
                 using (var jsonWriter = new JsonTextWriter(writer))
                 {
+                    jsonWriter.ArrayPool = JsonArrayPool;
                     jsonWriter.CloseOutput = false;
                     jsonWriter.AutoCompleteOnClose = false;
 
-                    Serializer.Serialize(jsonWriter, obj);
+                    serializer.Serialize(jsonWriter, obj);
                 }
             }
         }
 
         public static T ReadFromJson<T>(this HttpContext httpContext)
         {
-            using (var streamReader = new StreamReader(httpContext.Request.Body))
+            var serializer = JsonSerializer.CreateDefault();
+            using (var streamReader = new HttpRequestStreamReader(httpContext.Request.Body, Encoding.UTF8))
             using (var jsonTextReader = new JsonTextReader(streamReader))
             {
-                var obj = Serializer.Deserialize<T>(jsonTextReader);
+                jsonTextReader.ArrayPool = JsonArrayPool;
+                jsonTextReader.CloseInput = false;
+
+                var obj = serializer.Deserialize<T>(jsonTextReader);
 
                 var results = new List<ValidationResult>();
                 if (Validator.TryValidateObject(obj, new ValidationContext(obj), results))
@@ -158,6 +166,36 @@ namespace LightweightApi
             }
 
             _contacts.Remove(contact);
+        }
+    }
+
+    class JsonArrayPool<T> : IArrayPool<T>
+    {
+        private readonly ArrayPool<T> _inner;
+
+        public JsonArrayPool(ArrayPool<T> inner)
+        {
+            if (inner == null)
+            {
+                throw new ArgumentNullException(nameof(inner));
+            }
+
+            _inner = inner;
+        }
+
+        public T[] Rent(int minimumLength)
+        {
+            return _inner.Rent(minimumLength);
+        }
+
+        public void Return(T[] array)
+        {
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
+
+            _inner.Return(array);
         }
     }
 }
