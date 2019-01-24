@@ -10,7 +10,7 @@ namespace MvcCoreApi
     {
         private readonly string[] _mediaTypes = { "application/vnd.demo" };
 
-        public void AddParmeters(IApiVersionParameterDescriptionContext context)
+        public void AddParameters(IApiVersionParameterDescriptionContext context)
         {
         }
 
